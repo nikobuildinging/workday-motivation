@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>上班鼓励器</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:16px;background:transparent;color:#f7f7f8;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+.app{width:min(100%,460px);padding:27px 28px;border-radius:24px;background:linear-gradient(145deg,#383a41f7,#2a2c32fa);border:1px solid #ffffff20;box-shadow:0 24px 70px #0006;backdrop-filter:blur(24px)}
+.top{display:flex;align-items:center;gap:10px;font-weight:650;font-size:17px}.dot{width:10px;height:10px;background:#4d91ff;border-radius:50%}.gear{margin-left:auto;background:none;border:0;color:#ddd;font-size:20px;cursor:pointer}
+.rule{height:1px;background:#ffffff1b;margin:20px 0 17px}.date,.sub,.speed,.note{color:#aeb0b8}.date{font-size:12px}.status{display:flex;align-items:center;gap:9px;margin-top:17px;font-size:18px;font-weight:650}.bar{height:22px;width:5px;border-radius:5px;background:#4b8df8}.sub{margin-top:7px;font-size:13px}
+.label{font-size:13px;color:#aeb0b8;margin-top:24px}.money{font-size:49px;line-height:1.2;font-weight:750;color:#ff514d;margin-top:5px;font-variant-numeric:tabular-nums}.money small{font-size:25px}.speed{font-size:12px;margin-top:4px}
+.speedbox{margin-top:18px;background:#ffffff12;border-radius:12px;padding:14px;display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.progresshead{display:flex;justify-content:space-between;margin-top:25px;font-size:13px}.progresshead span+span{color:#aeb0b8;font-size:12px}.track{height:8px;border-radius:10px;background:#ffffff22;margin-top:12px;overflow:hidden}.fill{height:100%;background:#4b8df8;width:0}
+.month{display:flex;justify-content:space-between;align-items:center;margin-top:20px;font-size:14px}.month strong{font-size:23px;color:#ff514d;font-variant-numeric:tabular-nums}.disposable{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:15px;border-top:1px solid #ffffff1b;font-size:14px}.disposable strong{font-size:21px;color:#45c58a;font-variant-numeric:tabular-nums}
+.note{font-size:11px;margin-top:7px}.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.tile{background:#ffffff10;border-radius:12px;padding:13px}.tile small{display:block;color:#aeb0b8;font-size:11px;margin-bottom:7px}.tile b{font-size:19px}.foot{text-align:center;color:#858791;font-size:10px;margin-top:17px}
+dialog{border:1px solid #ffffff24;border-radius:18px;background:#34363d;color:white;width:min(94vw,370px);padding:20px;max-height:90vh;overflow:auto}dialog::backdrop{background:#0008}dialog h3{margin:0 0 16px}
+label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0;font-size:13px}input{width:145px;background:#22242a;border:1px solid #555862;border-radius:7px;padding:8px;color:white;text-align:right}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}button.primary,button.secondary{border:0;border-radius:8px;padding:9px 15px;color:white}.primary{background:#4b8df8}.secondary{background:#ffffff20}.hint{font-size:11px;color:#aeb0b8;line-height:1.5;margin-top:6px}
+</style></head>
+<body>
+<main class="app">
+ <div class="top"><i class="dot"></i><span>上班鼓励器</span><button class="gear" id="open" aria-label="设置">⚙</button></div>
+ <div class="rule"></div><div class="date" id="clock"></div>
+ <div class="status"><i class="bar"></i><span id="status"></span></div><div class="sub" id="countdown"></div>
+ <div class="label">今日已赚</div><div class="money"><small>¥</small><span id="earned">0.00</span></div><div class="speed" id="speed"></div>
+ <div class="speedbox"><span>按月薪及中国工作日自动计算</span><b id="hourly"></b></div>
+ <div class="progresshead"><span>今日工作进度</span><span id="pct">0%</span></div><div class="sub" id="worked"></div><div class="track"><div class="fill" id="fill"></div></div>
+ <div class="rule" style="margin-top:22px;margin-bottom:0"></div>
+ <div class="month"><span>本月累计</span><strong id="month">¥0.00</strong></div><div class="note" id="calendarNote">按中国法定节假日及调休工作日计算</div>
+ <div class="disposable"><span>本月可支配收入</span><strong id="disposable">¥0.00</strong></div><div class="note">本月累计 − 本月已支出</div>
+ <div class="tiles"><div class="tile"><small>月薪</small><b id="tileSalary">¥0.00</b></div><div class="tile"><small>今日满勤可得</small><b id="full">¥0.00</b></div></div>
+ <div class="foot">设置可修改月薪、工时及本月支出 · 数据保存在此浏览器</div>
+</main>
+<dialog id="dlg">
+ <h3>工作设置</h3>
+ <label>月薪（元）<input id="salary" type="number" min="0" step=".01"></label>
+ <label>计算月份<input id="monthPick" type="month"></label>
+ <label>上班时间<input id="start" type="time"></label><label>下班时间<input id="end" type="time"></label>
+ <label>午休开始<input id="ls" type="time"></label><label>午休结束<input id="le" type="time"></label>
+ <label>每日工时<input id="hours" type="number" min=".1" step=".25"></label>
+ <label>本月已支出（元）<input id="spent" type="number" min="0" step=".01"></label>
+ <div class="hint">时薪自动计算：月薪 ÷ 当月中国工作日天数 ÷ 每日工时。2026 年使用国务院公布的放假调休安排；其他年份暂按周一至周五估算，待官方日历公布后更新。</div>
+ <div class="actions"><button class="secondary" id="cancel">取消</button><button class="primary" id="save">保存设置</button></div>
+</dialog>
+<script>
+const currentMonth=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`};
+const defaults={salary:0,monthPick:currentMonth(),start:"09:00",end:"18:00",ls:"13:00",le:"14:00",hours:8,spent:0};
+let saved={};try{saved=JSON.parse(localStorage.getItem("workday-salary-v4")||"{}")||{}}catch(e){}
+let cfg={...defaults,...saved};
+const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,"0");
+const mins=t=>{const [h,m]=t.split(":").map(Number);return h*60+m},fmt=n=>Number(n).toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseMonth=s=>{const [y,m]=s.split("-").map(Number);return {y,m}};
+const holidayRanges2026=[["2026-01-01","2026-01-03"],["2026-02-15","2026-02-23"],["2026-04-04","2026-04-06"],["2026-05-01","2026-05-05"],["2026-06-19","2026-06-21"],["2026-09-25","2026-09-27"],["2026-10-01","2026-10-07"]];
+const makeup2026=new Set(["2026-01-04","2026-02-14","2026-02-28","2026-05-09","2026-09-20","2026-10-10"]);
+function officialWorkday(d){const key=ymd(d);if(d.getFullYear()!==2026)return d.getDay()!==0&&d.getDay()!==6;if(makeup2026.has(key))return true;if(holidayRanges2026.some(([a,b])=>key>=a&&key<=b))return false;return d.getDay()!==0&&d.getDay()!==6}
+function monthWorkdays(y,m){let c=0;for(let day=1;day<=new Date(y,m,0).getDate();day++)if(officialWorkday(new Date(y,m-1,day)))c++;return c}
+function hourlyRate(){const {y,m}=parseMonth(cfg.monthPick);return cfg.salary/Math.max(1,monthWorkdays(y,m))/Math.max(.1,cfg.hours)}
+function workedMinutes(d){if(!officialWorkday(d))return 0;const n=d.getHours()*60+d.getMinutes()+d.getSeconds()/60;return Math.max(0,Math.min(n,mins(cfg.ls))-mins(cfg.start))+Math.max(0,Math.min(n,mins(cfg.end))-mins(cfg.le))}
+function duration(v){v=Math.max(0,Math.floor(v));return `${Math.floor(v/60)}小时${v%60}分`}
+function render(){
+ const now=new Date(),{y,m}=parseMonth(cfg.monthPick),current=(y===now.getFullYear()&&m===now.getMonth()+1),rate=hourlyRate(),wm=current?workedMinutes(now):0,earned=current?Math.min(cfg.salary,wm/60*rate):0,progress=Math.min(1,wm/60/Math.max(.1,cfg.hours)),n=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+ $("clock").textContent=now.toLocaleString("zh-CN",{dateStyle:"full",timeStyle:"medium"});
+ let status,sub;if(!officialWorkday(now)){status="休息日";sub="今天也要好好照顾自己"}else if(n<mins(cfg.start)){status="还没到上班时间";sub=`距离上班还有 ${duration(mins(cfg.start)-n)}`}else if(n>=mins(cfg.end)){status="下班啦";sub="今天辛苦了，收工！"}else if(n>=mins(cfg.ls)&&n<mins(cfg.le)){status="午休时间";sub=`距离下午开工还有 ${duration(mins(cfg.le)-n)}`}else{status="上班中";sub=`距离下班还有 ${duration(mins(cfg.end)-n)}`}
+ $("status").textContent=status;$("countdown").textContent=sub;$("earned").textContent=fmt(earned);$("speed").textContent=`当前赚钱速度 ¥${(rate/3600).toFixed(4)} / 秒`;$("hourly").textContent=`¥${fmt(rate)} / 小时`;$("pct").textContent=`${Math.round(progress*100)}%`;$("worked").textContent=`已工作 ${(wm/60).toFixed(2)} / ${cfg.hours.toFixed(2)} 小时`;$("fill").style.width=`${progress*100}%`;
+ let total=0;if(current){for(let day=1;day<now.getDate();day++){if(officialWorkday(new Date(y,m-1,day)))total+=rate*cfg.hours}total+=earned}
+ $("month").textContent=`¥${fmt(total)}`;$("disposable").textContent=`¥${fmt(total-cfg.spent)}`;$("tileSalary").textContent=`¥${fmt(cfg.salary)}`;$("full").textContent=`¥${fmt(rate*cfg.hours)}`;
+ $("calendarNote").textContent=`${y}年${m}月：中国工作日 ${monthWorkdays(y,m)} 天${y===2026?"（国务院公布日历）":"（暂按周一至周五估算，未计入调休）"}`;
+}
+$("open").onclick=()=>{for(const k of ["salary","monthPick","start","end","ls","le","hours","spent"])$(k).value=cfg[k];$("dlg").showModal()};
+$("cancel").onclick=()=>$("dlg").close();
+$("save").onclick=()=>{const v={salary:Math.max(0,+$("salary").value||0),monthPick:$("monthPick").value,start:$("start").value,end:$("end").value,ls:$("ls").value,le:$("le").value,hours:Math.max(.1,+$("hours").value||8),spent:Math.max(0,+$("spent").value||0)};
+if(!v.monthPick||!v.start||!v.end||!v.ls||!v.le||mins(v.start)>=mins(v.end)||mins(v.ls)>=mins(v.le)){alert("请检查月份及时间设置");return}cfg=v;localStorage.setItem("workday-salary-v4",JSON.stringify(cfg));$("dlg").close();render()};
+render();setInterval(render,1000);
+</script></body></html>
